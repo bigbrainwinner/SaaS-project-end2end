@@ -257,6 +257,9 @@ export default function OrderDetailPage({ params }: PageProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-3">
+              <span className="text-xs font-mono font-bold text-neutral-400 bg-neutral-100 px-2 py-0.5 rounded">
+                ID: #{order.id.slice(0, 8).toUpperCase()}
+              </span>
               <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${getStatusStyles(order.status)}`}>
                 {order.status === 'In Review' ? 'PENDING REVIEW' : order.status.toUpperCase()}
               </span>

@@ -59,6 +59,10 @@ export async function signupAction(formData: Record<string, string>) {
         password,
         options: {
           emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+          data: {
+            name: formData.name || undefined,
+            company: formData.company || undefined,
+          }
         },
       });
 

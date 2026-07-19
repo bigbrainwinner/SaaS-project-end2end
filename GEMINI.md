@@ -54,3 +54,35 @@ When continuing development on this codebase, adhere to the following convention
 ### 🎨 Visual & Responsive Integrity
 - The app uses custom CSS parameters and Tailwind CSS v4 features. Ensure component layouts remain responsive (`sm:`, `md:`, `lg:`, `xl:` variants).
 - Use curated colors (`#8b5cf6`, `#f59e0b`, `#10b981`, `#94a3b8`) for dashboard and charts rather than standard default colors.
+
+---
+
+## 🔌 Connecting to a Live Supabase Project
+
+To connect this application to your live Supabase project and transition from local mock data fallbacks:
+
+### Step 1: Provision a Database on Supabase
+- Go to [supabase.com](https://supabase.com) and sign up/log in to create a new project.
+- Go to **Project Settings -> API** and copy:
+  - **Project URL**
+  - **API Anon Key** (under Project API keys)
+
+### Step 2: Configure Environment Variables
+Create a new file named `.env.local` in the root of the project:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_project_anon_key_here
+```
+
+### Step 3: Run Database Migrations
+Go to the **SQL Editor** in your Supabase dashboard, click "New query", paste the contents of:
+[supabase/migrations/20260719000000_schema.sql](file:///Users/dhanush/Desktop/PythonProjects/nicks-aG-tut/supabase/migrations/20260719000000_schema.sql)
+Click **Run** to execute. This query will:
+1. Initialize the `profiles`, `orders`, and `attachments` tables.
+2. Establish the trigger syncing auth sign-ups to client profile cards.
+3. Configure RLS (Row-Level Security) rules so users only view/mutate their own tasks.
+4. Set up the `attachments` storage bucket for file uploads.
+
+### Step 4: Run the Development Server
+Run `npm run dev`. The application will automatically detect your environment variables and transition from local mock state to the live Supabase database!
+

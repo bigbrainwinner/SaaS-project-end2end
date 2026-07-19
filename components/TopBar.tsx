@@ -12,7 +12,8 @@ interface TopBarProps {
 
 export default function TopBar({ onMenuClick }: TopBarProps) {
   const pathname = usePathname();
-  const { orders } = useApp();
+  const { orders, notifications } = useApp();
+  const hasUnread = notifications?.some(n => !n.read) ?? false;
 
   // Helper to generate dynamic breadcrumbs & title
   const getBreadcrumbsAndTitle = () => {
@@ -119,7 +120,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           <div className="relative">
             <Bell className="h-4.5 w-4.5" />
             {/* Unread indicator dot (positioned on top-right of bell) */}
-            <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#ff4520] border border-white" />
+            {hasUnread && (
+              <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-violet-600 border border-white" />
+            )}
           </div>
         </Link>
       </div>

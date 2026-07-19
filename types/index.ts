@@ -48,3 +48,12 @@ export interface Order {
   createdAt: string; // ISO date string
   attachments: Attachment[];
 }
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  type: 'info' | 'success' | 'deadline';
+  time: string;
+  read: boolean;
+}

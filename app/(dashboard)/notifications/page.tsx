@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Bell, Check, Trash2, Clock, CheckCircle, Info, Calendar } from 'lucide-react';
+import { useApp } from '@/lib/store/AppContext';
 
 interface NotificationItem {
   id: string;
@@ -13,160 +14,7 @@ interface NotificationItem {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'nt-15',
-      title: 'New Brief Comment',
-      description: 'Elena Stark commented on "Q3 Product Launch Announcement": "Looks great, let\'s move it forward."',
-      type: 'info',
-      time: '30 minutes ago',
-      read: false
-    },
-    {
-      id: 'nt-1',
-      title: 'New Order Created',
-      description: 'Your brief "Q3 Product Launch Announcement" was successfully created and queued.',
-      type: 'success',
-      time: '1 hour ago',
-      read: false
-    },
-    {
-      id: 'nt-5',
-      title: 'Content Draft Ready for Review',
-      description: 'The draft for "E-commerce SEO Best Practices" is ready for your feedback.',
-      type: 'info',
-      time: '2 hours ago',
-      read: false
-    },
-    {
-      id: 'nt-16',
-      title: 'Project Budget Alert',
-      description: 'Your workspace has used 85% of its monthly allocated content budget.',
-      type: 'deadline',
-      time: '3 hours ago',
-      read: false
-    },
-    {
-      id: 'nt-6',
-      title: 'Revision Requested',
-      description: 'Client requested a revision for "Vite vs Next.js: Performance Deep Dive".',
-      type: 'deadline',
-      time: '5 hours ago',
-      read: false
-    },
-    {
-      id: 'nt-7',
-      title: 'API Integration Connected',
-      description: 'Supabase storage integrations have been successfully synced and configured.',
-      type: 'success',
-      time: '1 day ago',
-      read: true
-    },
-    {
-      id: 'nt-8',
-      title: 'Collaborator Joined',
-      description: 'Alex Rivers has joined the content pipeline workspace.',
-      type: 'info',
-      time: '2 days ago',
-      read: true
-    },
-    {
-      id: 'nt-9',
-      title: 'Brief Template Updated',
-      description: 'The "Standard Copywriting Brief" template has been modified by the admin.',
-      type: 'info',
-      time: '3 days ago',
-      read: true
-    },
-    {
-      id: 'nt-2',
-      title: 'Invoice Paid',
-      description: 'Invoice INV-2026-004 of $149.00 was successfully processed and paid.',
-      type: 'success',
-      time: '4 days ago',
-      read: true
-    },
-    {
-      id: 'nt-3',
-      title: 'System Preferences Saved',
-      description: 'Your profile settings and notification preferences were successfully updated.',
-      type: 'info',
-      time: '5 days ago',
-      read: true
-    },
-    {
-      id: 'nt-4',
-      title: 'Approaching Deadline',
-      description: 'The content order "Technical Whitepaper: Scalable Database Design" is due shortly.',
-      type: 'deadline',
-      time: '1 week ago',
-      read: true
-    },
-    {
-      id: 'nt-10',
-      title: 'Monthly Digest Available',
-      description: 'Your monthly brief compilation and order analytics digest for June is ready.',
-      type: 'info',
-      time: '1 week ago',
-      read: true
-    },
-    {
-      id: 'nt-11',
-      title: 'Subscription Renewed',
-      description: 'Your Professional SaaS content plan subscription was auto-renewed successfully.',
-      type: 'success',
-      time: '1 week ago',
-      read: true
-    },
-    {
-      id: 'nt-17',
-      title: 'Supabase RLS Rules Verified',
-      description: 'Row-level security compliance rules check completed with no security leak issues found.',
-      type: 'success',
-      time: '1 week ago',
-      read: true
-    },
-    {
-      id: 'nt-12',
-      title: 'Deadline Extended',
-      description: 'The due date for order "SEO Strategy Playbook" has been extended to August 1st.',
-      type: 'info',
-      time: '2 weeks ago',
-      read: true
-    },
-    {
-      id: 'nt-13',
-      title: 'Team Role Changed',
-      description: 'Your workspace permission was updated from "Editor" to "Workspace Manager".',
-      type: 'info',
-      time: '2 weeks ago',
-      read: true
-    },
-    {
-      id: 'nt-18',
-      title: 'New Milestone Reached',
-      description: 'Your team completed 50 successful content deliverables this quarter.',
-      type: 'success',
-      time: '2 weeks ago',
-      read: true
-    },
-    {
-      id: 'nt-14',
-      title: 'Order Completed',
-      description: 'Brief "Social Media Strategy Roadmap" has been signed off and finalized.',
-      type: 'success',
-      time: '3 weeks ago',
-      read: true
-    },
-    {
-      id: 'nt-19',
-      title: 'Two-Factor Auth Enabled',
-      description: 'Two-factor authentication (2FA) was successfully set up on your client dashboard account.',
-      type: 'success',
-      time: '3 weeks ago',
-      read: true
-    }
-  ]);
+  const { notifications, setNotifications } = useApp();
 
   const handleMarkAllRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })));
@@ -236,7 +84,7 @@ export default function NotificationsPage() {
               >
                 {/* Visual Unread dot */}
                 {!item.read && (
-                  <span className="absolute left-1.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-[#ff4520]" />
+                  <span className="absolute left-1.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-violet-600" />
                 )}
 
                 {/* Icon box */}
@@ -265,7 +113,7 @@ export default function NotificationsPage() {
                     className="flex h-7 w-7 items-center justify-center rounded-full border border-neutral-100 bg-white text-neutral-400 hover:border-neutral-200 hover:text-neutral-700 transition-colors"
                     title={item.read ? 'Mark as unread' : 'Mark as read'}
                   >
-                    <Check className={`h-3.5 w-3.5 ${!item.read ? 'text-[#ff4520]' : ''}`} />
+                    <Check className={`h-3.5 w-3.5 ${!item.read ? 'text-violet-600' : ''}`} />
                   </button>
                   <button
                     onClick={() => handleDelete(item.id)}

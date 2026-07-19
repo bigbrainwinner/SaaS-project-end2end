@@ -216,6 +216,9 @@ export default function OrdersPage() {
                     {/* Task Name */}
                     <td className="px-6 py-4.5 font-bold text-neutral-800">
                       <Link href={`/orders/${order.id}`} className="hover:text-violet-600 transition-colors block font-sans">
+                        <span className="text-[10px] font-mono text-neutral-400 mr-2 block sm:inline">
+                          #{order.id.slice(0, 8).toUpperCase()}
+                        </span>
                         {order.title}
                       </Link>
                     </td>

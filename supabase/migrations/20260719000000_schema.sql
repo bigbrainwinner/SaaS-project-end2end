@@ -25,12 +25,13 @@ create policy "Allow users to update own profile" on public.profiles
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, name, avatar_url)
+  insert into public.profiles (id, email, name, company, avatar_url)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
-    coalesce(new.raw_user_meta_data->>'avatar_url', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop')
+    new.raw_user_meta_data->>'company',
+    coalesce(new.raw_user_meta_data->>'avatar_url', 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>')
   );
   return new;
 end;
@@ -110,5 +111,32 @@ create policy "Allow users to read own attachments" on storage.objects
 create policy "Allow users to delete own attachments" on storage.objects
   for delete using (
     bucket_id = 'attachments'
+    and auth.role() = 'authenticated'
+  );
+
+
+-- 5. AVATARS STORAGE SETUP (PUBLIC BUCKET & POLICIES)
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+create policy "Allow public read access to avatars" on storage.objects
+  for select using (bucket_id = 'avatars');
+
+create policy "Allow authenticated users to upload avatars" on storage.objects
+  for insert with check (
+    bucket_id = 'avatars'
+    and auth.role() = 'authenticated'
+  );
+
+create policy "Allow users to update own avatar" on storage.objects
+  for update using (
+    bucket_id = 'avatars'
+    and auth.role() = 'authenticated'
+  );
+
+create policy "Allow users to delete own avatar" on storage.objects
+  for delete using (
+    bucket_id = 'avatars'
     and auth.role() = 'authenticated'
   );

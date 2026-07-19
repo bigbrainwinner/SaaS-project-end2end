@@ -154,7 +154,7 @@ export async function createOrderAction(formData: FormData): Promise<{ success: 
 }
 
 // Update profile details
-export async function updateProfileAction(profileData: { name: string; company: string }): Promise<{ success: boolean; error?: string }> {
+export async function updateProfileAction(profileData: { name: string; company: string; avatarUrl?: string }): Promise<{ success: boolean; error?: string }> {
   if (isSupabaseConfigured()) {
     try {
       const supabase = await createServerSupabaseClient();
@@ -163,13 +163,19 @@ export async function updateProfileAction(profileData: { name: string; company: 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Unauthenticated user attempt');
 
+      const updates: any = {
+        name: profileData.name,
+        company: profileData.company,
+        updated_at: new Date().toISOString()
+      };
+
+      if (profileData.avatarUrl !== undefined) {
+        updates.avatar_url = profileData.avatarUrl;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          name: profileData.name,
-          company: profileData.company,
-          updated_at: new Date().toISOString()
-        })
+        .update(updates)
         .eq('id', user.id);
 
       if (error) throw error;
@@ -183,3 +189,67 @@ export async function updateProfileAction(profileData: { name: string; company: 
 
   return { success: true };
 }
+
+// Upload avatar photo to public avatars bucket
+export async function uploadAvatarAction(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
+  const file = formData.get('avatar') as File;
+  if (!file) return { success: false, error: 'No image file provided' };
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createServerSupabaseClient();
+      if (!supabase) throw new Error('Supabase client failed to initialize');
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Unauthenticated user attempt');
+
+      // Attempt to ensure 'avatars' bucket exists in case migration hasn't run
+      try {
+        await supabase.storage.createBucket('avatars', { public: true });
+      } catch (err) {
+        // Silently skip if it fails or already exists
+      }
+
+      const fileExt = file.name.split('.').pop() || 'png';
+      const uniquePath = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      // Upload file to the 'avatars' bucket
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(uniquePath, buffer, {
+          contentType: file.type,
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(uniquePath);
+
+      // Save public URL to profiles database row
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      return { success: true, url: publicUrl };
+    } catch (err: any) {
+      console.error('uploadAvatarAction error:', err);
+      return { success: false, error: err.message || 'Avatar upload failed' };
+    }
+  }
+
+  // Local Mock fallback: create local blob url
+  return { success: true, url: URL.createObjectURL(file) };
+}
+

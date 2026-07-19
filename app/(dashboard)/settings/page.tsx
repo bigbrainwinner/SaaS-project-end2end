@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { User as UserIcon, Bell, CreditCard, Volume2, Plus, Trash2, CheckCircle, Upload, FileText, Download } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { User as UserIcon, Bell, CreditCard, Volume2, Plus, Trash2, CheckCircle, Upload, FileText, Download, Trash } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
+import { uploadAvatarAction } from '@/lib/actions/orders';
 
 type TabId = 'profile' | 'preferences' | 'billing' | 'voice';
 
@@ -14,18 +15,85 @@ export default function SettingsPage() {
     updateProfile,
     updateSettings,
     addBrandVoicePreset,
-    deleteBrandVoicePreset
+    deleteBrandVoicePreset,
+    isLoading
   } = useApp();
 
   // Active tab state
-  const [activeTab, setActiveTab] = useState<TabId>('profile');
+  const [activeTab, setActiveTabState] = useState<TabId>('profile');
 
   // Success feedback state
   const [success, setSuccess] = useState('');
 
+  // Load active tab from localStorage on mount
+  useEffect(() => {
+    const storedTab = localStorage.getItem('active_settings_tab') as TabId;
+    if (storedTab && ['profile', 'preferences', 'billing', 'voice'].includes(storedTab)) {
+      setActiveTabState(storedTab);
+    }
+  }, []);
+
+  const setActiveTab = (tab: TabId) => {
+    setActiveTabState(tab);
+    localStorage.setItem('active_settings_tab', tab);
+  };
+
   // Profile Form States
   const [profileName, setProfileName] = useState(user.name);
   const [profileCompany, setProfileCompany] = useState(user.company);
+
+  // Sync profile fields when user loads/updates
+  useEffect(() => {
+    setProfileName(user.name);
+    setProfileCompany(user.company);
+  }, [user]);
+
+  // Avatar Upload States
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const res = await uploadAvatarAction(formData);
+      if (res.success && res.url) {
+        await updateProfile({ avatarUrl: res.url });
+        triggerSuccess('Profile picture updated successfully!');
+      } else {
+        alert(res.error || 'Failed to upload avatar');
+      }
+    } catch (err: any) {
+      alert(err.message || 'An error occurred during avatar upload');
+    } finally {
+      setAvatarLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (window.confirm('Are you sure you want to remove your profile picture?')) {
+      setAvatarLoading(true);
+      try {
+        const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>';
+        await updateProfile({ avatarUrl: defaultAvatar });
+        triggerSuccess('Profile picture removed.');
+      } catch (err: any) {
+        alert(err.message || 'An error occurred while removing avatar');
+      } finally {
+        setAvatarLoading(false);
+      }
+    }
+  };
 
   // New Brand Voice Preset States
   const [voiceName, setVoiceName] = useState('');
@@ -92,6 +160,14 @@ export default function SettingsPage() {
     { id: 'voice' as TabId, label: 'Brand Voice Presets', icon: Volume2 },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-4 max-w-5xl mx-auto items-start">
       
@@ -145,20 +221,48 @@ export default function SettingsPage() {
               {/* Avatar Upload UI section */}
               <div className="flex items-center gap-5 border-y border-neutral-50 py-5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="h-16 w-16 rounded-full border border-neutral-100 object-cover"
-                />
+                <div className="relative">
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="h-16 w-16 rounded-full border border-neutral-100 object-cover"
+                  />
+                  {avatarLoading && (
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
                 <div>
-                  <button
-                    type="button"
-                    onClick={() => alert('Select avatar image (mocked)')}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-bold text-neutral-700 transition-all hover:bg-neutral-50"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Upload Image
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAvatarClick}
+                      disabled={avatarLoading}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-bold text-neutral-700 transition-all hover:bg-neutral-50 disabled:opacity-50"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Upload Image
+                    </button>
+                    {user.avatarUrl !== 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>' && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveAvatar}
+                        disabled={avatarLoading}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 transition-all hover:bg-red-100 disabled:opacity-50"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                        Remove Image
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                  />
                   <p className="text-[9px] text-neutral-400 mt-1">Recommended size 256x256px. PNG, JPG or WEBP.</p>
                 </div>
               </div>
@@ -201,7 +305,7 @@ export default function SettingsPage() {
               <div className="pt-4 border-t border-neutral-50">
                 <button
                   type="submit"
-                  className="rounded-lg bg-[#ff4520] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#e03d1a] active:scale-[0.98]"
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-violet-700 active:scale-[0.98]"
                 >
                   Save Profile Changes
                 </button>
@@ -232,7 +336,7 @@ export default function SettingsPage() {
                       onChange={() => handleTogglePreference('emailOnStatusChange')}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ff4520]"></div>
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
                   </label>
                 </div>
 
@@ -249,7 +353,7 @@ export default function SettingsPage() {
                       onChange={() => handleTogglePreference('emailOnCompletion')}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ff4520]"></div>
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
                   </label>
                 </div>
 
@@ -266,7 +370,7 @@ export default function SettingsPage() {
                       onChange={() => handleTogglePreference('weeklyDigest')}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ff4520]"></div>
+                    <div className="w-9 h-5 bg-neutral-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-violet-600"></div>
                   </label>
                 </div>
               </div>
@@ -320,25 +424,8 @@ export default function SettingsPage() {
                     </thead>
                     <tbody className="divide-y divide-neutral-100 text-neutral-600">
                       <tr>
-                        <td className="p-3 font-bold text-neutral-700">INV-2026-004</td>
-                        <td className="p-3">July 15, 2026</td>
-                        <td className="p-3">$149.00</td>
-                        <td className="p-3"><span className="rounded bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700 uppercase">Paid</span></td>
-                        <td className="p-3 text-right">
-                          <button onClick={() => alert('Downloading invoice (mock)')} className="text-neutral-400 hover:text-neutral-700 inline-flex items-center">
-                            <Download className="h-3.5 w-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="p-3 font-bold text-neutral-700">INV-2026-003</td>
-                        <td className="p-3">June 15, 2026</td>
-                        <td className="p-3">$149.00</td>
-                        <td className="p-3"><span className="rounded bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 text-[8px] font-bold text-emerald-700 uppercase">Paid</span></td>
-                        <td className="p-3 text-right">
-                          <button onClick={() => alert('Downloading invoice (mock)')} className="text-neutral-400 hover:text-neutral-700 inline-flex items-center">
-                            <Download className="h-3.5 w-3.5" />
-                          </button>
+                        <td colSpan={5} className="p-8 text-center text-neutral-400 font-medium">
+                          No invoices found.
                         </td>
                       </tr>
                     </tbody>
@@ -423,7 +510,7 @@ export default function SettingsPage() {
                   <div className="flex gap-2.5 pt-2">
                     <button
                       type="submit"
-                      className="rounded-lg bg-[#ff4520] px-4 py-2 text-xs font-semibold text-white hover:bg-[#e03d1a] transition-all"
+                      className="rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-700 transition-all"
                     >
                       Save Preset
                     </button>

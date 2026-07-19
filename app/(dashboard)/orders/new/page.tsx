@@ -120,9 +120,9 @@ export default function NewOrderPage() {
     setIsSubmitting(true);
 
     // Simulate submission delay
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
-        const newOrder = addOrder({
+        const newOrder = await addOrder({
           title,
           contentType,
           wordCount: Number(wordCount),

@@ -28,17 +28,17 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       title = 'Dashboard';
       crumbs.push({ label: 'Dashboard', href: '/dashboard' });
     } else if (parts[0] === 'orders') {
-      title = 'Orders';
-      crumbs.push({ label: 'Orders', href: '/orders' });
+      title = 'My tasks';
+      crumbs.push({ label: 'My tasks', href: '/orders' });
 
       if (parts[1] === 'new') {
-        title = 'New Order';
-        crumbs.push({ label: 'New Order', href: '/orders/new' });
+        title = 'New task';
+        crumbs.push({ label: 'New task', href: '/orders/new' });
       } else if (parts[1]) {
         // Dynamic order ID
         const orderId = parts[1];
         const order = orders.find((o) => o.id === orderId);
-        const orderTitle = order ? order.title : 'Order Details';
+        const orderTitle = order ? order.title : 'Task details';
         title = orderTitle;
         crumbs.push({ label: orderTitle, href: `/orders/${orderId}` });
       }

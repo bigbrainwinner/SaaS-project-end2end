@@ -5,7 +5,7 @@ export const mockUser: User = {
   email: 'shahid@wavespace.agency',
   name: 'Shahid Miah',
   company: 'Wavespace',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop' // Modern Unsplash avatar image
+  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop'
 };
 
 export const mockBrandVoicePresets: BrandVoicePreset[] = [
@@ -29,97 +29,81 @@ export const mockOrders: Order[] = [
   {
     id: 'ord-1',
     userId: 'usr-1',
-    title: 'Q3 Product Launch Announcement',
+    title: 'SaaS Growth Guide',
     contentType: 'Blog Post',
     status: 'In Progress',
-    deadline: '2026-07-25T17:00:00.000Z',
-    wordCount: 1200,
-    targetAudience: 'SaaS founders and tech professionals',
-    toneVoice: 'Professional yet conversational, energetic',
-    keywords: ['product launch', 'saas platform', 'agile workflow'],
-    referenceLinks: ['https://example.com/product-specs', 'https://example.com/competitor-compare'],
-    additionalNotes: 'Make sure to emphasize the new drag-and-drop feature and the speed optimizations we did in the latest sprint. Keep the language snappy.',
-    createdAt: '2026-07-15T09:00:00.000Z',
-    attachments: [
-      {
-        id: 'att-1',
-        fileName: 'launch-specs.pdf',
-        filePath: '/attachments/launch-specs.pdf',
-        fileSize: 1048576, // 1 MB
-        createdAt: '2026-07-15T09:00:00.000Z'
-      }
-    ]
+    deadline: '2026-10-31T17:00:00.000Z',
+    wordCount: 1500,
+    targetAudience: 'SaaS founders and growth marketers',
+    toneVoice: 'Informative, direct, action-oriented',
+    keywords: ['saas growth', 'marketing guide', 'acquisition'],
+    referenceLinks: [],
+    additionalNotes: 'Keep the copy highly actionable and structured with bullet points.',
+    createdAt: '2026-09-15T09:00:00.000Z',
+    attachments: []
   },
   {
     id: 'ord-2',
     userId: 'usr-1',
-    title: 'Email Newsletter: AI Integration Guide',
+    title: 'Q3 Newsletter',
     contentType: 'Newsletter Email',
     status: 'In Review',
-    deadline: '2026-07-20T12:00:00.000Z',
+    deadline: '2026-10-19T17:00:00.000Z',
     wordCount: 600,
-    targetAudience: 'Existing newsletter subscribers',
-    toneVoice: 'Informative, educational, helpful',
-    keywords: ['AI features', 'user experience', 'automation'],
-    referenceLinks: ['https://example.com/ai-docs'],
-    additionalNotes: 'Draft version of our bi-weekly update. Emphasize that the AI features are free during the beta phase.',
-    createdAt: '2026-07-12T14:15:00.000Z',
+    targetAudience: 'Newsletter subscribers',
+    toneVoice: 'Snappy, punchy, engaging',
+    keywords: [],
+    referenceLinks: [],
+    additionalNotes: 'Summarize our key achievements and feature updates from Q3.',
+    createdAt: '2026-09-12T14:15:00.000Z',
     attachments: []
   },
   {
     id: 'ord-3',
     userId: 'usr-1',
-    title: 'Technical Whitepaper: Scalable Database Design',
-    contentType: 'Whitepaper',
+    title: 'Product Launch Post',
+    contentType: 'Social Media Post',
     status: 'Completed',
-    deadline: '2026-07-10T18:00:00.000Z',
-    wordCount: 3500,
-    targetAudience: 'Backend engineers and CTOs',
-    toneVoice: 'Highly technical, authoritative, precise',
-    keywords: ['database scalability', 'sharding', 'postgres', 'connection pool'],
-    referenceLinks: ['https://example.com/postgres-benchmark'],
-    additionalNotes: 'The whitepaper is already completed and approved by the engineering lead. It is ready for publication.',
-    createdAt: '2026-07-02T10:00:00.000Z',
-    attachments: [
-      {
-        id: 'att-2',
-        fileName: 'architecture_diagram.png',
-        filePath: '/attachments/architecture_diagram.png',
-        fileSize: 524288, // 512 KB
-        createdAt: '2026-07-02T10:30:00.000Z'
-      }
-    ]
+    deadline: '2026-10-14T17:00:00.000Z',
+    wordCount: 250,
+    targetAudience: 'LinkedIn audience',
+    toneVoice: 'Excited, professional, value-driven',
+    keywords: [],
+    referenceLinks: [],
+    additionalNotes: 'Highlight the speed improvements and modern design system.',
+    createdAt: '2026-09-10T10:00:00.000Z',
+    attachments: []
   },
   {
     id: 'ord-4',
     userId: 'usr-1',
-    title: 'Homepage Copy Rewrite',
+    title: 'Landing Page Copy',
     contentType: 'Website Copy',
     status: 'Draft',
-    deadline: '2026-08-05T09:00:00.000Z',
+    deadline: '2026-11-04T17:00:00.000Z',
     wordCount: 800,
-    targetAudience: 'Marketing leads and CMOs',
-    toneVoice: 'Punchy, value-focused, direct',
-    keywords: ['conversion rate', 'marketing platform', 'optimize conversions'],
+    targetAudience: 'New website visitors',
+    toneVoice: 'Clear, modern, benefits-focused',
+    keywords: [],
     referenceLinks: [],
-    additionalNotes: 'We need to redo the hero section and the features list copy. Keep the core focus on how it saves teams 15 hours a week.',
-    createdAt: '2026-07-18T11:00:00.000Z',
+    additionalNotes: 'Focus on high-converting headlines and subheadlines.',
+    createdAt: '2026-09-18T11:00:00.000Z',
     attachments: []
   },
   {
     id: 'ord-5',
     userId: 'usr-1',
-    title: 'Social Media Campaign: Summer Promo',
-    contentType: 'Social Media Post',
-    status: 'In Progress',
-    deadline: '2026-07-28T15:00:00.000Z',
-    wordCount: 300,
-    targetAudience: 'B2C Customers',
-    toneVoice: 'Playful, friendly, catchy',
-    keywords: ['summer sale', 'discount', 'special deal'],
+    title: 'Customer Success Story',
+    contentType: 'Case Study',
+    status: 'Completed',
+    deadline: '2026-09-29T17:00:00.000Z',
+    wordCount: 1200,
+    targetAudience: 'Enterprise clients',
+    toneVoice: 'Data-driven, precise, professional',
+    keywords: [],
     referenceLinks: [],
-    additionalNotes: 'Write 3 variants for Twitter, 2 for LinkedIn, and 1 for Instagram. Focus on the 30% discount code: SUMMER30.',
-    createdAt: '2026-07-17T16:00:00.000Z',
+    additionalNotes: 'Incorporate metrics of how client saved 15+ hours per week.',
+    createdAt: '2026-09-17T16:00:00.000Z',
     attachments: []
   }
 ];

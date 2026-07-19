@@ -10,11 +10,11 @@ import { OrderStatus } from '@/types';
 export function getStatusStyles(status: OrderStatus) {
   switch (status) {
     case 'Draft':
-      return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+      return 'bg-neutral-100 text-neutral-500 border-neutral-200';
     case 'In Progress':
-      return 'bg-blue-50 text-blue-600 border-blue-100';
+      return 'bg-violet-50 text-violet-600 border-violet-100';
     case 'In Review':
-      return 'bg-amber-50 text-amber-600 border-amber-100';
+      return 'bg-orange-50 text-orange-600 border-orange-100';
     case 'Completed':
       return 'bg-emerald-50 text-emerald-600 border-emerald-100';
     default:
@@ -85,10 +85,10 @@ export default function DashboardPage() {
         </div>
         <Link
           href="/orders/new"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#ff4520] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#e03d1a] focus:outline-none focus:ring-2 focus:ring-[#ff4520]/20 active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 active:scale-[0.98]"
         >
           <Plus className="h-4 w-4" />
-          New Order
+          New task
         </Link>
       </div>
 
@@ -139,9 +139,9 @@ export default function DashboardPage() {
                 <p className="text-xs font-medium text-neutral-400 mt-2">No orders created yet.</p>
                 <Link
                   href="/orders/new"
-                  className="mt-3 text-xs font-semibold text-[#ff4520] hover:underline"
+                  className="mt-3 text-xs font-semibold text-violet-600 hover:underline"
                 >
-                  Create your first order
+                  Create your first task
                 </Link>
               </div>
             ) : (
@@ -154,7 +154,7 @@ export default function DashboardPage() {
                     <div className="flex flex-col gap-1">
                       <Link
                         href={`/orders/${order.id}`}
-                        className="text-xs font-bold text-neutral-800 hover:text-[#ff4520] transition-colors"
+                        className="text-xs font-bold text-neutral-800 hover:text-violet-600 transition-colors"
                       >
                         {order.title}
                       </Link>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
 
                     <div className="flex items-center justify-between sm:justify-end gap-3 mt-3 sm:mt-0">
                       <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide uppercase ${getStatusStyles(order.status)}`}>
-                        {order.status}
+                        {order.status === 'In Review' ? 'PENDING REVIEW' : order.status.toUpperCase()}
                       </span>
                       <Link
                         href={`/orders/${order.id}`}
@@ -192,9 +192,9 @@ export default function DashboardPage() {
               </span>
               <Link
                 href="/orders/new"
-                className="text-xs font-bold text-[#ff4520] hover:text-[#e03d1a] transition-colors flex items-center gap-1"
+                className="text-xs font-bold text-violet-600 hover:text-violet-700 transition-colors flex items-center gap-1"
               >
-                Configure new order →
+                Configure new task →
               </Link>
             </div>
           )}

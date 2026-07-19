@@ -2,12 +2,31 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, Calendar, FileText, ArrowUpDown, Plus, SlidersHorizontal, ChevronRight, XCircle } from 'lucide-react';
+import { Search, Calendar, ChevronRight, XCircle, Plus, SlidersHorizontal } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import { OrderStatus } from '@/types';
-import { getStatusStyles } from '../dashboard/page';
 
 type SortOption = 'deadline-soon' | 'deadline-late' | 'created-new' | 'created-old' | 'words-high' | 'words-low';
+
+export function getCustomStatusStyles(status: OrderStatus) {
+  switch (status) {
+    case 'Draft':
+      return 'bg-neutral-100 text-neutral-500 border-neutral-200';
+    case 'In Progress':
+      return 'bg-violet-50 text-violet-600 border-violet-100';
+    case 'In Review':
+      return 'bg-orange-50 text-orange-600 border-orange-100';
+    case 'Completed':
+      return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+    default:
+      return 'bg-neutral-100 text-neutral-600 border-neutral-200';
+  }
+}
+
+export function getStatusLabel(status: OrderStatus) {
+  if (status === 'In Review') return 'PENDING REVIEW';
+  return status.toUpperCase();
+}
 
 export default function OrdersPage() {
   const { orders } = useApp();
@@ -56,14 +75,14 @@ export default function OrdersPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs text-neutral-500 mt-1">Manage and track your ongoing content drafts, briefs, and deliverables.</p>
+          <p className="text-xs text-neutral-500 mt-1 font-sans">Manage and track your ongoing projects</p>
         </div>
         <Link
           href="/orders/new"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#ff4520] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#e03d1a] focus:outline-none focus:ring-2 focus:ring-[#ff4520]/20 active:scale-[0.98]"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500/20 active:scale-[0.98] font-sans"
         >
           <Plus className="h-4 w-4" />
-          Create Order
+          New task
         </Link>
       </div>
 
@@ -80,42 +99,57 @@ export default function OrdersPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search orders by title or content type..."
-              className="w-full rounded-lg border border-neutral-200 bg-neutral-50/50 py-2 pl-9 pr-4 text-xs font-medium text-neutral-700 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:ring-2 focus:ring-neutral-100"
+              placeholder="Search orders..."
+              className="w-full rounded-lg border border-neutral-200 bg-neutral-50/50 py-2 pl-9 pr-4 text-xs font-medium text-neutral-700 outline-none transition-all placeholder:text-neutral-400 focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100 font-sans"
             />
           </div>
 
-          {/* Sorting Dropdown */}
-          <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-neutral-400" />
-            <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Sort by</span>
+          {/* Sorting and Filter Dropdowns */}
+          <div className="flex items-center gap-3">
+            {/* Status Select dropdown to match screenshot */}
             <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="rounded-lg border border-neutral-200 bg-neutral-50/50 px-3 py-1.5 text-xs font-semibold text-neutral-700 outline-none transition-all hover:border-neutral-300 focus:border-neutral-400 focus:bg-white"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as OrderStatus | 'All')}
+              className="rounded-lg border border-neutral-200 bg-neutral-50/50 px-3 py-1.5 text-xs font-semibold text-neutral-700 outline-none transition-all hover:border-neutral-300 focus:border-violet-400 focus:bg-white font-sans"
             >
-              <option value="created-new">Created: Newest</option>
-              <option value="created-old">Created: Oldest</option>
-              <option value="deadline-soon">Deadline: Soonest</option>
-              <option value="deadline-late">Deadline: Latest</option>
-              <option value="words-high">Word Count: High-Low</option>
-              <option value="words-low">Word Count: Low-High</option>
+              <option value="All">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="In Progress">In Progress</option>
+              <option value="In Review">In Review</option>
+              <option value="Completed">Completed</option>
             </select>
+
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-neutral-400" />
+              <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider font-sans">Sort by</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="rounded-lg border border-neutral-200 bg-neutral-50/50 px-3 py-1.5 text-xs font-semibold text-neutral-700 outline-none transition-all hover:border-neutral-300 focus:border-violet-400 focus:bg-white font-sans"
+              >
+                <option value="created-new">Created: Newest</option>
+                <option value="created-old">Created: Oldest</option>
+                <option value="deadline-soon">Deadline: Soonest</option>
+                <option value="deadline-late">Deadline: Latest</option>
+                <option value="words-high">Word Count: High-Low</option>
+                <option value="words-low">Word Count: Low-High</option>
+              </select>
+            </div>
           </div>
         </div>
 
         {/* Status Filter Chips */}
         <div className="border-t border-neutral-50 pt-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mr-2">Filter Status:</span>
+          <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider mr-2 font-sans">Filter Status:</span>
           {filterChips.map((chip) => {
             const active = statusFilter === chip;
             return (
               <button
                 key={chip}
                 onClick={() => setStatusFilter(chip)}
-                className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all ${
+                className={`rounded-full px-3.5 py-1 text-xs font-bold transition-all font-sans ${
                   active
-                    ? 'bg-black text-white'
+                    ? 'bg-violet-600 text-white shadow-sm'
                     : 'bg-neutral-50 border border-neutral-200/60 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800'
                 }`}
               >
@@ -134,11 +168,11 @@ export default function OrdersPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-50 text-neutral-400 mb-4">
               <XCircle className="h-6 w-6" />
             </div>
-            <h3 className="text-sm font-bold text-neutral-800">No orders found</h3>
-            <p className="text-xs text-neutral-400 max-w-sm mt-1">
+            <h3 className="text-sm font-bold text-neutral-800 font-sans">No tasks found</h3>
+            <p className="text-xs text-neutral-400 max-w-sm mt-1 font-sans">
               {search || statusFilter !== 'All'
-                ? "We couldn't find any orders matching your search or filters. Try adjusting your settings."
-                : "Get started by creating your very first order brief."}
+                ? "We couldn't find any tasks matching your search or filters. Try adjusting your settings."
+                : "Get started by creating your very first task brief."}
             </p>
             {(search || statusFilter !== 'All') && (
               <button
@@ -146,7 +180,7 @@ export default function OrdersPage() {
                   setSearch('');
                   setStatusFilter('All');
                 }}
-                className="mt-4 text-xs font-bold text-[#ff4520] hover:underline"
+                className="mt-4 text-xs font-bold text-violet-600 hover:underline font-sans"
               >
                 Clear filters
               </button>
@@ -154,7 +188,7 @@ export default function OrdersPage() {
             {!search && statusFilter === 'All' && (
               <Link
                 href="/orders/new"
-                className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-[#ff4520] px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#e03d1a]"
+                className="mt-4 inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-violet-700 font-sans"
               >
                 Create First Brief
               </Link>
@@ -163,15 +197,13 @@ export default function OrdersPage() {
         ) : (
           /* Table Layout */
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-xs">
+            <table className="w-full border-collapse text-left text-xs font-sans">
               <thead className="border-b border-neutral-100 bg-neutral-50/75 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
                 <tr>
-                  <th className="px-6 py-4">Title</th>
-                  <th className="px-6 py-4 hidden sm:table-cell">Type</th>
-                  <th className="px-6 py-4 hidden md:table-cell">Word Count</th>
-                  <th className="px-6 py-4 hidden lg:table-cell font-medium">Created</th>
-                  <th className="px-6 py-4">Deadline</th>
-                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">TASK NAME</th>
+                  <th className="px-6 py-4">STATUS</th>
+                  <th className="px-6 py-4">ASSIGNED TO</th>
+                  <th className="px-6 py-4">DEADLINE</th>
                   <th className="px-6 py-4 text-right">Action</th>
                 </tr>
               </thead>
@@ -181,50 +213,48 @@ export default function OrdersPage() {
                     key={order.id}
                     className="group hover:bg-neutral-50/50 transition-colors"
                   >
-                    {/* Title */}
+                    {/* Task Name */}
                     <td className="px-6 py-4.5 font-bold text-neutral-800">
-                      <Link href={`/orders/${order.id}`} className="hover:text-[#ff4520] transition-colors block">
+                      <Link href={`/orders/${order.id}`} className="hover:text-violet-600 transition-colors block font-sans">
                         {order.title}
                       </Link>
                     </td>
 
-                    {/* Content Type */}
-                    <td className="px-6 py-4.5 text-neutral-500 hidden sm:table-cell">
-                      {order.contentType}
+                    {/* Status */}
+                    <td className="px-6 py-4.5">
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[9px] font-bold tracking-wider ${getCustomStatusStyles(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
                     </td>
 
-                    {/* Word Count */}
-                    <td className="px-6 py-4.5 text-neutral-500 hidden md:table-cell">
-                      {order.wordCount.toLocaleString()} words
-                    </td>
-
-                    {/* Created Date */}
-                    <td className="px-6 py-4.5 text-neutral-400 hidden lg:table-cell">
-                      {new Date(order.createdAt).toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
+                    {/* Assigned To (Overlapping Avatars) */}
+                    <td className="px-6 py-4.5">
+                      <div className="flex -space-x-1.5 overflow-hidden">
+                        <img
+                          className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover"
+                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop&crop=face"
+                          alt="Team member 1"
+                        />
+                        <img
+                          className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover"
+                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face"
+                          alt="Team member 2"
+                        />
+                        <img
+                          className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover"
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop&crop=face"
+                          alt="Team member 3"
+                        />
+                      </div>
                     </td>
 
                     {/* Deadline */}
                     <td className="px-6 py-4.5 text-neutral-600 font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-neutral-400" />
-                        <span>
-                          {new Date(order.deadline).toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Status Badge */}
-                    <td className="px-6 py-4.5">
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${getStatusStyles(order.status)}`}>
-                        {order.status}
-                      </span>
+                      {new Date(order.deadline).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </td>
 
                     {/* Row Detail View trigger button */}

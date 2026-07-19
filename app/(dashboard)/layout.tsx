@@ -17,7 +17,7 @@ export default function DashboardLayout({
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       {/* Main Content Area - pushed right by the sidebar on large screens */}
-      <div className="flex flex-col min-h-screen lg:pl-20">
+      <div className="flex flex-col min-h-screen lg:pl-64">
         {/* TopBar */}
         <TopBar onMenuClick={() => setIsSidebarOpen(true)} />
 

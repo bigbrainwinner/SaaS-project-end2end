@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { User, Order, Settings, BrandVoicePreset, OrderStatus, NotificationItem } from '../../types';
 import { mockUser, mockOrders, mockBrandVoicePresets } from '../../data/mockData';
 import { toSentenceCase } from '../utils';
@@ -57,178 +58,193 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   });
   const [isLoading, setIsLoading] = useState(true);
+  const pathname = usePathname();
+
+  // Reset state helper
+  const resetState = useCallback(() => {
+    setUser({
+      id: '',
+      email: '',
+      name: '',
+      company: '',
+      avatarUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>'
+    });
+    setOrders([]);
+    setBrandVoicePresets([]);
+    setNotificationsState([]);
+  }, []);
+
+  // Main data loader helper
+  const loadData = useCallback(async (userId?: string, forceLoading = false) => {
+    const startTime = Date.now();
+    if (forceLoading || orders.length === 0) {
+      setIsLoading(true);
+    }
+
+    const enforceMinDelay = async () => {
+      const elapsed = Date.now() - startTime;
+      const minDuration = 800; // 800ms minimum loading duration for a smooth experience
+      if (elapsed < minDuration) {
+        await new Promise((resolve) => setTimeout(resolve, minDuration - elapsed));
+      }
+    };
+
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = createBrowserSupabaseClient();
+        if (supabase) {
+          const activeUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+          if (activeUserId) {
+            // 1. Fetch Profile, Orders, and Auth details in parallel
+            const [profileRes, ordersRes, authUserRes] = await Promise.all([
+              supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', activeUserId)
+                .single(),
+              supabase
+                .from('orders')
+                .select('*, attachments(*)')
+                .order('created_at', { ascending: false }),
+              supabase.auth.getUser()
+            ]);
+
+            const profileData = profileRes.data;
+            const dbOrders = ordersRes.data;
+            const authUser = authUserRes.data.user;
+
+            let name = '';
+            let company = '';
+            let email = '';
+            let avatarUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>';
+
+            if (profileData) {
+              name = profileData.name || 'User';
+              company = profileData.company || 'My Company';
+              email = profileData.email;
+              avatarUrl = profileData.avatar_url || avatarUrl;
+            } else if (authUser) {
+              name = authUser.email?.split('@')[0] || 'User';
+              company = 'My Company';
+              email = authUser.email || '';
+            }
+
+            setUser({
+              id: activeUserId,
+              email,
+              name,
+              company,
+              avatarUrl
+            });
+
+            if (dbOrders) {
+              const mapped: Order[] = dbOrders.map((o: any) => ({
+                id: o.id,
+                userId: o.user_id,
+                title: o.title,
+                contentType: o.content_type,
+                status: o.status as OrderStatus,
+                deadline: o.deadline,
+                wordCount: o.word_count,
+                targetAudience: o.target_audience,
+                toneVoice: o.tone_voice,
+                keywords: o.keywords || [],
+                referenceLinks: o.reference_links || [],
+                additionalNotes: o.additional_notes || '',
+                createdAt: o.created_at,
+                attachments: (o.attachments || []).map((att: any) => ({
+                  id: att.id,
+                  fileName: att.file_name,
+                  filePath: att.file_path,
+                  fileSize: att.file_size,
+                  createdAt: att.created_at
+                }))
+              }));
+              setOrders(mapped);
+            } else {
+              setOrders([]);
+            }
+
+            // Load mock presets & notifications (scoped to activeUserId)
+            const storedPresets = localStorage.getItem(`saas_presets_${activeUserId}`);
+            if (storedPresets) {
+              setBrandVoicePresets(JSON.parse(storedPresets));
+            } else {
+              setBrandVoicePresets(mockBrandVoicePresets);
+              localStorage.setItem(`saas_presets_${activeUserId}`, JSON.stringify(mockBrandVoicePresets));
+            }
+
+            const storedNotifications = localStorage.getItem(`saas_notifications_${activeUserId}`);
+            if (storedNotifications) {
+              setNotificationsState(JSON.parse(storedNotifications));
+            } else {
+              setNotificationsState([]);
+            }
+
+            const storedSettings = localStorage.getItem(`saas_settings_${activeUserId}`);
+            if (storedSettings) {
+              setSettings(JSON.parse(storedSettings));
+            }
+          } else {
+            resetState();
+          }
+        }
+      } catch (err) {
+        console.error('Error loading Supabase content:', err);
+        resetState();
+      } finally {
+        await enforceMinDelay();
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Local Mock Load Fallback
+    try {
+      const storedUser = localStorage.getItem('saas_user');
+      const activeUserId = storedUser ? JSON.parse(storedUser).id : 'usr-1';
+
+      const storedUserObj = localStorage.getItem('saas_user');
+      const storedOrders = localStorage.getItem(`saas_orders_${activeUserId}`);
+      const storedPresets = localStorage.getItem(`saas_presets_${activeUserId}`);
+      const storedNotifications = localStorage.getItem(`saas_notifications_${activeUserId}`);
+      const storedSettings = localStorage.getItem(`saas_settings_${activeUserId}`);
+
+      if (storedUserObj) setUser(JSON.parse(storedUserObj));
+      else setUser(mockUser);
+
+      if (storedOrders) {
+        setOrders(JSON.parse(storedOrders));
+      } else {
+        setOrders(mockOrders);
+        localStorage.setItem(`saas_orders_${activeUserId}`, JSON.stringify(mockOrders));
+      }
+
+      if (storedPresets) {
+        setBrandVoicePresets(JSON.parse(storedPresets));
+      } else {
+        setBrandVoicePresets(mockBrandVoicePresets);
+        localStorage.setItem(`saas_presets_${activeUserId}`, JSON.stringify(mockBrandVoicePresets));
+      }
+
+      if (storedNotifications) {
+        setNotificationsState(JSON.parse(storedNotifications));
+      } else {
+        setNotificationsState([]);
+      }
+
+      if (storedSettings) setSettings(JSON.parse(storedSettings));
+    } catch (e) {
+      console.error('Error loading local state:', e);
+    } finally {
+      await enforceMinDelay();
+      setIsLoading(false);
+    }
+  }, [orders.length, resetState]);
 
   // Load from Supabase or localStorage on mount
   useEffect(() => {
     let authSubscription: { unsubscribe: () => void } | null = null;
-
-    async function loadData(userId?: string) {
-      setIsLoading(true);
-      if (isSupabaseConfigured()) {
-        try {
-          const supabase = createBrowserSupabaseClient();
-          if (supabase) {
-            const activeUserId = userId || (await supabase.auth.getUser()).data.user?.id;
-            if (activeUserId) {
-              // 1. Fetch Profile, Orders, and Auth details in parallel
-              const [profileRes, ordersRes, authUserRes] = await Promise.all([
-                supabase
-                  .from('profiles')
-                  .select('*')
-                  .eq('id', activeUserId)
-                  .single(),
-                supabase
-                  .from('orders')
-                  .select('*, attachments(*)')
-                  .order('created_at', { ascending: false }),
-                supabase.auth.getUser()
-              ]);
-
-              const profileData = profileRes.data;
-              const dbOrders = ordersRes.data;
-              const authUser = authUserRes.data.user;
-
-              let name = '';
-              let company = '';
-              let email = '';
-              let avatarUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>';
-
-              if (profileData) {
-                name = profileData.name || 'User';
-                company = profileData.company || 'My Company';
-                email = profileData.email;
-                avatarUrl = profileData.avatar_url || avatarUrl;
-              } else if (authUser) {
-                name = authUser.email?.split('@')[0] || 'User';
-                company = 'My Company';
-                email = authUser.email || '';
-              }
-
-              setUser({
-                id: activeUserId,
-                email,
-                name,
-                company,
-                avatarUrl
-              });
-
-              if (dbOrders) {
-                const mapped: Order[] = dbOrders.map((o: any) => ({
-                  id: o.id,
-                  userId: o.user_id,
-                  title: o.title,
-                  contentType: o.content_type,
-                  status: o.status as OrderStatus,
-                  deadline: o.deadline,
-                  wordCount: o.word_count,
-                  targetAudience: o.target_audience,
-                  toneVoice: o.tone_voice,
-                  keywords: o.keywords || [],
-                  referenceLinks: o.reference_links || [],
-                  additionalNotes: o.additional_notes || '',
-                  createdAt: o.created_at,
-                  attachments: (o.attachments || []).map((att: any) => ({
-                    id: att.id,
-                    fileName: att.file_name,
-                    filePath: att.file_path,
-                    fileSize: att.file_size,
-                    createdAt: att.created_at
-                  }))
-                }));
-                setOrders(mapped);
-              } else {
-                setOrders([]);
-              }
-
-              // Load mock presets & notifications (scoped to activeUserId)
-              const storedPresets = localStorage.getItem(`saas_presets_${activeUserId}`);
-              if (storedPresets) {
-                setBrandVoicePresets(JSON.parse(storedPresets));
-              } else {
-                setBrandVoicePresets(mockBrandVoicePresets);
-                localStorage.setItem(`saas_presets_${activeUserId}`, JSON.stringify(mockBrandVoicePresets));
-              }
-
-              const storedNotifications = localStorage.getItem(`saas_notifications_${activeUserId}`);
-              if (storedNotifications) {
-                setNotificationsState(JSON.parse(storedNotifications));
-              } else {
-                setNotificationsState([]);
-              }
-
-              const storedSettings = localStorage.getItem(`saas_settings_${activeUserId}`);
-              if (storedSettings) {
-                setSettings(JSON.parse(storedSettings));
-              }
-            } else {
-              // No user session: reset state
-              resetState();
-            }
-          }
-        } catch (err) {
-          console.error('Error loading Supabase content:', err);
-          resetState();
-        } finally {
-          setIsLoading(false);
-        }
-        return;
-      }
-
-      // Local Mock Load Fallback
-      try {
-        const storedUser = localStorage.getItem('saas_user');
-        const activeUserId = storedUser ? JSON.parse(storedUser).id : 'usr-1';
-
-        const storedUserObj = localStorage.getItem('saas_user');
-        const storedOrders = localStorage.getItem(`saas_orders_${activeUserId}`);
-        const storedPresets = localStorage.getItem(`saas_presets_${activeUserId}`);
-        const storedNotifications = localStorage.getItem(`saas_notifications_${activeUserId}`);
-        const storedSettings = localStorage.getItem(`saas_settings_${activeUserId}`);
-
-        if (storedUserObj) setUser(JSON.parse(storedUserObj));
-        else setUser(mockUser);
-
-        if (storedOrders) {
-          setOrders(JSON.parse(storedOrders));
-        } else {
-          setOrders(mockOrders);
-          localStorage.setItem(`saas_orders_${activeUserId}`, JSON.stringify(mockOrders));
-        }
-
-        if (storedPresets) {
-          setBrandVoicePresets(JSON.parse(storedPresets));
-        } else {
-          setBrandVoicePresets(mockBrandVoicePresets);
-          localStorage.setItem(`saas_presets_${activeUserId}`, JSON.stringify(mockBrandVoicePresets));
-        }
-
-        if (storedNotifications) {
-          setNotificationsState(JSON.parse(storedNotifications));
-        } else {
-          setNotificationsState([]);
-        }
-
-        if (storedSettings) setSettings(JSON.parse(storedSettings));
-      } catch (e) {
-        console.error('Error loading local state:', e);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    // Reset state helper
-    function resetState() {
-      setUser({
-        id: '',
-        email: '',
-        name: '',
-        company: '',
-        avatarUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>'
-      });
-      setOrders([]);
-      setBrandVoicePresets([]);
-      setNotifications([]);
-    }
 
     if (isSupabaseConfigured()) {
       const supabase = createBrowserSupabaseClient();
@@ -236,7 +252,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // Handle auth status changes dynamically
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-            loadData(session?.user?.id);
+            loadData(session?.user?.id, false);
           } else if (event === 'SIGNED_OUT') {
             resetState();
             if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
@@ -248,14 +264,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    loadData();
+    const timer = setTimeout(() => {
+      loadData(undefined, true);
+    }, 0);
 
     return () => {
       if (authSubscription) {
         authSubscription.unsubscribe();
       }
+      clearTimeout(timer);
     };
-  }, []);
+  }, [loadData, resetState]);
+
+  // Listen to protected route changes when context states are missing user data
+  useEffect(() => {
+    const isProtectedRoute = pathname.startsWith('/dashboard') || 
+                            pathname.startsWith('/orders') || 
+                            pathname.startsWith('/notifications') || 
+                            pathname.startsWith('/settings');
+    
+    if (isProtectedRoute && !user.id && !isLoading) {
+      const timer = setTimeout(() => {
+        loadData(undefined, true);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname, user.id, isLoading, loadData]);
 
   // Sync helpers
   const saveOrders = (newOrders: Order[]) => {

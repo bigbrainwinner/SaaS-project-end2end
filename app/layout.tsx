@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kiro - Order Management Dashboard",
+  title: "hi client. - Order Management Dashboard",
   description: "A clean and minimal SaaS dashboard for client order management and content tracking.",
 };
 

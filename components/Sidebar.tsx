@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LayoutGrid, CheckSquare, Bell, Settings, LogOut } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import { logoutAction } from '@/lib/actions/auth';
+import Logo from '@/components/Logo';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -57,25 +58,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         {/* Top Section: Logo & Branding */}
         <div className="w-full px-4 mb-6">
           <Link href="/dashboard" className="flex items-center justify-between px-2 py-1.5 rounded-xl hover:bg-[#1c1b22] transition-colors group">
-            <div className="flex items-center gap-3">
-              {/* Custom Purple Checkmark Squircle Logo */}
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 shadow-md shadow-violet-600/30">
-                <svg
-                  className="h-5 w-5 text-white"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <span className="text-base font-extrabold tracking-tight text-white font-sans">
-                Taskbito
-              </span>
-            </div>
+            <Logo size="md" lightText={true} />
           </Link>
         </div>
 

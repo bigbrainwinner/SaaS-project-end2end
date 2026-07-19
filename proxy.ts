@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { isSupabaseConfigured } from './lib/supabase/config';
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Define route check boundaries
@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
       return response;
     } catch (e) {
-      console.error('Middleware Supabase error, falling back to mock auth check:', e);
+      console.error('Proxy Supabase error, falling back to mock auth check:', e);
     }
   }
 

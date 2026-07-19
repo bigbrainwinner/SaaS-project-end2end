@@ -160,13 +160,7 @@ export default function SettingsPage() {
     { id: 'voice' as TabId, label: 'Brand Voice Presets', icon: Volume2 },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <div className="h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="grid gap-6 md:grid-cols-4 max-w-5xl mx-auto items-start">
@@ -185,7 +179,7 @@ export default function SettingsPage() {
               }}
               className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-xs font-bold transition-all ${
                 active
-                  ? 'bg-neutral-900 text-white shadow-sm'
+                  ? 'bg-violet-600 text-white shadow-md shadow-violet-600/10'
                   : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-800'
               }`}
             >

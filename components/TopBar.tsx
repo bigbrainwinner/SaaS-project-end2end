@@ -45,6 +45,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     } else if (parts[0] === 'settings') {
       title = 'Settings';
       crumbs.push({ label: 'Settings', href: '/settings' });
+    } else if (parts[0] === 'notifications') {
+      title = 'Notifications';
+      crumbs.push({ label: 'Notifications', href: '/notifications' });
     }
 
     return { crumbs, title };
@@ -109,11 +112,16 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         </div>
 
         {/* Notification Bell */}
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-100 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-800 transition-colors">
-          <Bell className="h-4.5 w-4.5" />
-          {/* Unread indicator dot */}
-          <span className="absolute right-3.5 top-3.5 h-1.5 w-1.5 rounded-full bg-[#ff4520]" />
-        </button>
+        <Link
+          href="/notifications"
+          className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-100 bg-white text-neutral-600 hover:bg-neutral-50 hover:text-neutral-800 transition-colors"
+        >
+          <div className="relative">
+            <Bell className="h-4.5 w-4.5" />
+            {/* Unread indicator dot (positioned on top-right of bell) */}
+            <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-[#ff4520] border border-white" />
+          </div>
+        </Link>
       </div>
     </header>
   );

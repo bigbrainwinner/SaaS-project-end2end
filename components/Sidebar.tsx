@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LayoutGrid, FileText, Settings, LogOut } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
+import { logoutAction } from '@/lib/actions/auth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,7 +14,15 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useApp();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  const handleLogout = async () => {
+    await logoutAction();
+    router.push('/auth/login');
+    router.refresh();
+  };
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -89,35 +98,65 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           })}
         </nav>
 
-        {/* Bottom: Settings, Profile and Logout */}
+        {/* Bottom: Settings, Profile and Logout Popover */}
         <div className="flex flex-col items-center gap-5">
-          {/* Settings */}
-          <Link
-            href="/settings"
-            title="Settings"
-            onClick={() => setIsOpen(false)}
-            className={`flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-200 ${
-              pathname.startsWith('/settings')
-                ? 'bg-neutral-800 text-white'
-                : 'text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300'
-            }`}
-          >
-            <Settings className="h-5 w-5" />
-          </Link>
+          {/* User Profile Avatar with popover */}
+          <div className="relative">
+            <button
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-800 transition-all hover:border-neutral-700 bg-neutral-900 focus:outline-none"
+              title="User Account"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            </button>
 
-          {/* User Profile Avatar */}
-          <div className="relative group cursor-pointer">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={user.avatarUrl}
-              alt={user.name}
-              className="h-9 w-9 rounded-full object-cover border border-neutral-800 transition-transform group-hover:scale-105"
-            />
-            {/* Simple tooltip / popup for details */}
-            <div className="absolute bottom-0 left-12 hidden group-hover:block z-50 bg-neutral-900 text-white text-xs rounded py-1 px-2 whitespace-nowrap shadow-xl">
-              <p className="font-semibold">{user.name}</p>
-              <p className="text-[10px] text-neutral-400">{user.company}</p>
-            </div>
+            {/* Popover popup details (opens to the right of sidebar) */}
+            {showProfileMenu && (
+              <>
+                {/* Click overlay to close menu */}
+                <div
+                  className="fixed inset-0 z-40 bg-transparent"
+                  onClick={() => setShowProfileMenu(false)}
+                />
+                
+                <div className="absolute bottom-0 left-14 z-50 w-56 rounded-xl border border-neutral-800 bg-black p-4 text-xs shadow-2xl text-white space-y-3 animate-fade-in">
+                  <div className="space-y-0.5 border-b border-neutral-900 pb-2.5">
+                    <p className="font-bold text-white">{user.name}</p>
+                    <p className="text-[10px] text-neutral-400 font-semibold">{user.company}</p>
+                    <p className="text-[9px] text-neutral-500 font-medium">{user.email}</p>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    {/* Settings Item inside popup */}
+                    <Link
+                      href="/settings"
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-neutral-400 hover:bg-neutral-900 hover:text-white transition-colors"
+                    >
+                      <Settings className="h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+
+                    {/* Sign Out Item inside popup */}
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-neutral-400 hover:bg-neutral-900 hover:text-red-400 transition-colors text-left font-semibold"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>

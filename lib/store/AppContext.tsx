@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Order, Settings, BrandVoicePreset, OrderStatus } from '../../types';
 import { mockUser, mockOrders, mockBrandVoicePresets } from '../../data/mockData';
+import { toSentenceCase } from '../utils';
 
 interface AppContextType {
   user: User;
@@ -114,7 +115,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
       userId: user.id,
-      title: orderData.title,
+      title: toSentenceCase(orderData.title),
       contentType: orderData.contentType,
       status: 'Draft',
       deadline: new Date(orderData.deadline).toISOString(),
@@ -140,7 +141,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateOrder = (id: string, updates: Partial<Order>) => {
-    const updated = orders.map(o => (o.id === id ? { ...o, ...updates } : o));
+    const updated = orders.map(o => {
+      if (o.id === id) {
+        const title = updates.title !== undefined ? toSentenceCase(updates.title) : o.title;
+        return { ...o, ...updates, title };
+      }
+      return o;
+    });
     saveOrders(updated);
   };
 

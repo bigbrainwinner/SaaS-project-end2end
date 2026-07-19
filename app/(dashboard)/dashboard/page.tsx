@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, ChevronRight, FileText, Clock, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
@@ -24,6 +24,14 @@ export function getStatusStyles(status: OrderStatus) {
 
 export default function DashboardPage() {
   const { orders } = useApp();
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAnimated(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Compute stats
   const total = orders.length;
@@ -62,6 +70,7 @@ export default function DashboardPage() {
     if (activeCount === 0) return null;
     if (activeCount === 1) {
       const segment = activeSegments[0];
+      const dashLength = animated ? 100 : 0;
       return (
         <circle
           cx="21"
@@ -70,7 +79,9 @@ export default function DashboardPage() {
           fill="transparent"
           stroke={segment.color}
           strokeWidth="5.5"
-          className="transition-all duration-300 ease-out hover:stroke-[6.5] cursor-pointer origin-center"
+          strokeDasharray={`${dashLength} ${100 - dashLength}`}
+          strokeDashoffset="25"
+          className="transition-all duration-[1000ms] ease-out hover:stroke-[6.5] cursor-pointer origin-center"
         />
       );
     }
@@ -79,7 +90,7 @@ export default function DashboardPage() {
 
     return activeSegments.map((segment) => {
       const p = segment.percent;
-      const dashLength = p - gapOffset;
+      const dashLength = animated ? (p - gapOffset) : 0;
       const strokeDasharray = `${dashLength} ${100 - dashLength}`;
       const offset = 100 - accumulatedPercent + 25; 
       accumulatedPercent += p;
@@ -96,7 +107,7 @@ export default function DashboardPage() {
           strokeDasharray={strokeDasharray}
           strokeDashoffset={offset}
           strokeLinecap="round"
-          className="transition-all duration-300 ease-out hover:stroke-[6.5] cursor-pointer origin-center"
+          className="transition-all duration-[1000ms] ease-out hover:stroke-[6.5] cursor-pointer origin-center"
         />
       );
     });
@@ -267,9 +278,10 @@ export default function DashboardPage() {
                     />
                     {renderSegments()}
                   </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl sm:text-3xl lg:text-2xl xl:text-3xl font-extrabold text-neutral-900 tracking-tight leading-none">{total}</span>
-                    <span className="text-[8px] sm:text-[9px] lg:text-[8px] xl:text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-1 sm:mt-1.5 lg:mt-1 xl:mt-1.5">Total Tasks</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <span className="text-sm sm:text-base lg:text-sm xl:text-base font-extrabold text-neutral-900 tracking-tight leading-none">
+                      {total} Total
+                    </span>
                   </div>
                 </>
               ) : (

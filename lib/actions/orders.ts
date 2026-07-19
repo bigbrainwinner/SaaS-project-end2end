@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '../supabase/server';
 import { isSupabaseConfigured } from '../supabase/config';
 import { revalidatePath } from 'next/cache';
 import { Order, OrderStatus } from '@/types';
+import { toSentenceCase } from '../utils';
 
 // Fetch all orders for the current user
 export async function fetchOrdersAction(): Promise<{ success: boolean; data?: any[]; error?: string }> {
@@ -56,7 +57,7 @@ export async function fetchOrderByIdAction(id: string): Promise<{ success: boole
 
 // Create order + attachments upload action
 export async function createOrderAction(formData: FormData): Promise<{ success: boolean; data?: any; error?: string }> {
-  const title = formData.get('title') as string;
+  const title = toSentenceCase(formData.get('title') as string);
   const contentType = formData.get('contentType') as string;
   const wordCount = Number(formData.get('wordCount'));
   const deadline = formData.get('deadline') as string;

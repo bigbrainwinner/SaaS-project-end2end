@@ -23,6 +23,7 @@ interface AppContextType {
     attachments: File[];
   }) => Order;
   updateOrder: (id: string, updates: Partial<Order>) => void;
+  deleteOrder: (id: string) => void;
   updateProfile: (updates: Partial<User>) => void;
   updateSettings: (updates: Partial<Settings>) => void;
   addBrandVoicePreset: (preset: Omit<BrandVoicePreset, 'id'>) => void;
@@ -143,6 +144,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     saveOrders(updated);
   };
 
+  const deleteOrder = (id: string) => {
+    const updated = orders.filter(o => o.id !== id);
+    saveOrders(updated);
+  };
+
   const updateProfile = (updates: Partial<User>) => {
     const updated = { ...user, ...updates };
     saveUser(updated);
@@ -177,6 +183,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         addOrder,
         updateOrder,
+        deleteOrder,
         updateProfile,
         updateSettings,
         addBrandVoicePreset,

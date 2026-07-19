@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutGrid, CheckSquare, Bell, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { LayoutGrid, CheckSquare, Bell, Settings, LogOut } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import { logoutAction } from '@/lib/actions/auth';
 
@@ -76,7 +76,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 Taskbito
               </span>
             </div>
-            <ChevronDown className="h-4 w-4 text-neutral-400 group-hover:text-white transition-colors shrink-0" />
           </Link>
         </div>
 
@@ -121,7 +120,6 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 <p className="text-xs font-semibold text-white truncate">{user.name}</p>
                 <p className="text-[10px] text-neutral-400 truncate">{user.company}</p>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
             </button>
 
             {/* Profile Dropdown Popup */}

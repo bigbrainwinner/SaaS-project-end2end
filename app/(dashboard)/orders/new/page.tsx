@@ -84,7 +84,7 @@ export default function NewOrderPage() {
   const validateForm = () => {
     const tempErrors: Record<string, string> = {};
 
-    if (!title.trim()) tempErrors.title = 'Order title is required';
+    if (!title.trim()) tempErrors.title = 'Task title is required';
     else if (title.trim().length < 5) tempErrors.title = 'Title must be at least 5 characters';
 
     if (!contentType) tempErrors.contentType = 'Please select a content type';
@@ -138,7 +138,7 @@ export default function NewOrderPage() {
         // Redirect to detail page
         router.push(`/orders/${newOrder.id}`);
       } catch (err) {
-        console.error('Failed to submit order:', err);
+        console.error('Failed to submit task:', err);
         setIsSubmitting(false);
       }
     }, 800);
@@ -150,8 +150,8 @@ export default function NewOrderPage() {
       {/* Left 2 Columns: Main Info Form Card */}
       <div className="md:col-span-2 rounded-xl border border-neutral-100 bg-white p-6 shadow-sm space-y-6">
         <div>
-          <h2 className="text-base font-bold text-neutral-900">Create a New Content Order</h2>
-          <p className="text-xs text-neutral-400 mt-1">Configure your content parameters, brief, and deadline settings below.</p>
+          <h2 className="text-base font-bold text-neutral-900 font-sans">Create a new task brief</h2>
+          <p className="text-xs text-neutral-400 mt-1 font-sans">Configure your task parameters, brief, and deadline settings below.</p>
         </div>
 
         <div className="space-y-4">
@@ -316,9 +316,9 @@ export default function NewOrderPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded-lg bg-[#ff4520] px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#e03d1a] disabled:opacity-50 active:scale-[0.98]"
+            className="rounded-lg bg-violet-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-violet-700 disabled:opacity-50 active:scale-[0.98] font-sans"
           >
-            {isSubmitting ? 'Submitting Brief...' : 'Save Order'}
+            {isSubmitting ? 'Submitting brief...' : 'Save task'}
           </button>
           <button
             type="button"

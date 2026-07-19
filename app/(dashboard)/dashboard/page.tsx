@@ -46,28 +46,60 @@ export default function DashboardPage() {
   const pctCompleted = hasOrders ? (completed / total) * 100 : 0;
   const pctDraft = hasOrders ? (draft / total) * 100 : 0;
 
-  // Render SVG segments
-  // Circumference of radius 15.915 is exactly 100
-  // stroke-dasharray="[percentage] [100 - percentage]"
+  const activeSegments = [
+    { key: 'inProgress', value: inProgress, percent: pctInProgress, color: '#8b5cf6', label: 'In Progress' }, // Purple (vibrant)
+    { key: 'inReview', value: inReview, percent: pctInReview, color: '#f59e0b', label: 'In Review' }, // Amber (high contrast)
+    { key: 'completed', value: completed, percent: pctCompleted, color: '#10b981', label: 'Completed' }, // Emerald
+    { key: 'draft', value: draft, percent: pctDraft, color: '#94a3b8', label: 'Draft' }, // Slate Gray
+  ].filter(s => s.percent > 0);
+
+  const activeCount = activeSegments.length;
+  const minPercent = activeCount > 0 ? Math.min(...activeSegments.map(s => s.percent)) : 0;
+
+  // Render SVG segments with precise gap offsets & rounded stroke caps
   let accumulatedPercent = 0;
-  const createCircleSegment = (percent: number, strokeColor: string) => {
-    if (percent === 0) return null;
-    const offset = 100 - accumulatedPercent + 25; // +25 to start at top (12 o'clock)
-    accumulatedPercent += percent;
-    return (
-      <circle
-        key={strokeColor}
-        cx="21"
-        cy="21"
-        r="15.915"
-        fill="transparent"
-        stroke={strokeColor}
-        strokeWidth="4"
-        strokeDasharray={`${percent} ${100 - percent}`}
-        strokeDashoffset={offset}
-        className="transition-all duration-500 ease-out"
-      />
-    );
+  const renderSegments = () => {
+    if (activeCount === 0) return null;
+    if (activeCount === 1) {
+      const segment = activeSegments[0];
+      return (
+        <circle
+          cx="21"
+          cy="21"
+          r="15.915"
+          fill="transparent"
+          stroke={segment.color}
+          strokeWidth="5.5"
+          className="transition-all duration-300 ease-out hover:stroke-[6.5] cursor-pointer origin-center"
+        />
+      );
+    }
+
+    const gapOffset = Math.min(8, minPercent * 0.7);
+
+    return activeSegments.map((segment) => {
+      const p = segment.percent;
+      const dashLength = p - gapOffset;
+      const strokeDasharray = `${dashLength} ${100 - dashLength}`;
+      const offset = 100 - accumulatedPercent + 25; 
+      accumulatedPercent += p;
+
+      return (
+        <circle
+          key={segment.key}
+          cx="21"
+          cy="21"
+          r="15.915"
+          fill="transparent"
+          stroke={segment.color}
+          strokeWidth="5.5"
+          strokeDasharray={strokeDasharray}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-300 ease-out hover:stroke-[6.5] cursor-pointer origin-center"
+        />
+      );
+    });
   };
 
   // Get 3 most recent orders
@@ -201,73 +233,75 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Status Donut Chart */}
-        <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="font-bold text-neutral-900">Pipeline Breakdown</h3>
-            <p className="text-[11px] text-neutral-400 mt-0.5">Visualization of your workflow phases.</p>
+        <div className="rounded-2xl border border-neutral-100 bg-white p-4 sm:p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full min-h-[300px]">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-2 mb-6 pb-4 border-b border-neutral-50">
+            <div>
+              <h3 className="font-bold text-neutral-900 tracking-tight text-sm xl:text-base">Pipeline Breakdown</h3>
+              <p className="text-[10px] xl:text-[11px] text-neutral-400 mt-0.5">Distribution of active tasks</p>
+            </div>
+            <Link
+              href="/orders"
+              className="group inline-flex items-center gap-1 text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors shrink-0 pt-0.5"
+            >
+              View all
+              <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </div>
 
-          <div className="my-8 flex justify-center">
-            {hasOrders ? (
-              <div className="relative h-40 w-40">
-                <svg viewBox="0 0 42 42" className="h-full w-full">
-                  {/* Background gray ring */}
-                  <circle
-                    cx="21"
-                    cy="21"
-                    r="15.915"
-                    fill="transparent"
-                    stroke="#f3f4f6"
-                    strokeWidth="4"
-                  />
-
-                  {/* Dynamic segments */}
-                  {createCircleSegment(pctCompleted, '#10b981')} {/* Green */}
-                  {createCircleSegment(pctInReview, '#f59e0b')}   {/* Amber */}
-                  {createCircleSegment(pctInProgress, '#3b82f6')} {/* Blue */}
-                  {createCircleSegment(pctDraft, '#6b7280')}      {/* Gray */}
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black text-neutral-800">{total}</span>
-                  <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">Total</span>
+          {/* Chart & Legend Row */}
+          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center justify-center gap-6 sm:gap-8 lg:gap-6 xl:gap-8 my-auto py-2">
+            {/* Chart */}
+            <div className="relative w-36 h-36 sm:w-40 sm:h-40 lg:w-36 lg:h-36 xl:w-40 xl:h-40 shrink-0">
+              {hasOrders ? (
+                <>
+                  <svg viewBox="0 0 42 42" className="h-full w-full">
+                    {/* Background track for structure */}
+                    <circle
+                      cx="21"
+                      cy="21"
+                      r="15.915"
+                      fill="transparent"
+                      stroke="#f1f5f9"
+                      strokeWidth="5.5"
+                    />
+                    {renderSegments()}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-2xl sm:text-3xl lg:text-2xl xl:text-3xl font-extrabold text-neutral-900 tracking-tight leading-none">{total}</span>
+                    <span className="text-[8px] sm:text-[9px] lg:text-[8px] xl:text-[9px] font-bold text-neutral-400 uppercase tracking-widest mt-1 sm:mt-1.5 lg:mt-1 xl:mt-1.5">Total Tasks</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex w-36 h-36 sm:w-40 sm:h-40 lg:w-36 lg:h-36 xl:w-40 xl:h-40 items-center justify-center rounded-full border border-dashed border-neutral-200 bg-neutral-50/30">
+                  <span className="text-[11px] font-semibold text-neutral-400">No tasks</span>
                 </div>
-              </div>
-            ) : (
-              <div className="flex h-40 w-40 items-center justify-center rounded-full border-4 border-neutral-100">
-                <span className="text-xs font-bold text-neutral-400">No data</span>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Legend */}
-          <div className="space-y-2 border-t border-neutral-100 pt-5">
-            <div className="flex items-center justify-between text-[11px] font-medium text-neutral-500">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span>Completed</span>
-              </div>
-              <span className="font-bold text-neutral-700">{completed} ({Math.round(pctCompleted)}%)</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-medium text-neutral-500">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                <span>In Review</span>
-              </div>
-              <span className="font-bold text-neutral-700">{inReview} ({Math.round(pctInReview)}%)</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-medium text-neutral-500">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                <span>In Progress</span>
-              </div>
-              <span className="font-bold text-neutral-700">{inProgress} ({Math.round(pctInProgress)}%)</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] font-medium text-neutral-500">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-neutral-500" />
-                <span>Draft</span>
-              </div>
-              <span className="font-bold text-neutral-700">{draft} ({Math.round(pctDraft)}%)</span>
+            {/* Legend */}
+            <div className="flex flex-col gap-3 min-w-[120px]">
+              {[
+                { label: 'In Progress', count: inProgress, color: '#8b5cf6' },
+                { label: 'In Review', count: inReview, color: '#f59e0b' },
+                { label: 'Completed', count: completed, color: '#10b981' },
+                { label: 'Draft', count: draft, color: '#94a3b8' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-3 group/legend">
+                  <span
+                    className="h-2.5 w-2.5 rounded-full shrink-0 transition-transform duration-200 group-hover/legend:scale-110"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <div>
+                    <p className="text-xs font-bold text-neutral-700 leading-none transition-colors duration-200 group-hover/legend:text-neutral-900">
+                      {item.label}
+                    </p>
+                    <p className="text-[10px] text-neutral-400 font-medium mt-1">
+                      {item.count} {item.count === 1 ? 'task' : 'tasks'}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

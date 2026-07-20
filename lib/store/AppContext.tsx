@@ -138,14 +138,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               avatarUrl = sanitizeAvatarUrl(authUser.user_metadata?.avatar_url || avatarUrl);
             }
 
-            console.log('AppProvider user details loaded:', {
-              activeUserId,
-              profileData,
-              authUserMetadata: authUser?.user_metadata,
-              derivedName: name,
-              derivedCompany: company
-            });
-
             setUser({
               id: activeUserId,
               email,

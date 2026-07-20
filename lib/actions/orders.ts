@@ -173,10 +173,30 @@ export async function updateProfileAction(profileData: { name: string; company: 
         updates.avatar_url = profileData.avatarUrl;
       }
 
-      const { error } = await supabase
+      // Check if profile exists first to avoid RLS upsert issues
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      let error;
+      if (existingProfile) {
+        const res = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', user.id);
+        error = res.error;
+      } else {
+        const res = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            ...updates
+          });
+        error = res.error;
+      }
 
       if (error) throw error;
 
@@ -231,14 +251,34 @@ export async function uploadAvatarAction(formData: FormData): Promise<{ success:
         .from('avatars')
         .getPublicUrl(uniquePath);
 
-      // Save public URL to profiles database row
-      const { error: updateError } = await supabase
+      // Save public URL to profiles database row (use exists check to avoid RLS bugs)
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({
-          avatar_url: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      let updateError;
+      if (existingProfile) {
+        const res = await supabase
+          .from('profiles')
+          .update({
+            avatar_url: publicUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+        updateError = res.error;
+      } else {
+        const res = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            avatar_url: publicUrl,
+            updated_at: new Date().toISOString()
+          });
+        updateError = res.error;
+      }
 
       if (updateError) throw updateError;
 

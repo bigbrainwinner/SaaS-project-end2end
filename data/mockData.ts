@@ -5,7 +5,7 @@ export const mockUser: User = {
   email: 'shahid@wavespace.agency',
   name: 'Shahid Miah',
   company: 'Wavespace',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop'
+  avatarUrl: ''
 };
 
 export const mockBrandVoicePresets: BrandVoicePreset[] = [

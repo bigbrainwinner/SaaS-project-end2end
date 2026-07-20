@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User as UserIcon, Bell, CreditCard, Volume2, Plus, Trash2, CheckCircle, Upload, FileText, Download, Trash } from 'lucide-react';
 import { useApp } from '@/lib/store/AppContext';
 import { uploadAvatarAction } from '@/lib/actions/orders';
+import ImageCropper from '@/components/ImageCropper';
 
 type TabId = 'profile' | 'preferences' | 'billing' | 'voice';
 
@@ -51,19 +52,29 @@ export default function SettingsPage() {
   // Avatar Upload States
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperSrc(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedFile: File) => {
+    setCropperSrc(null);
     setAvatarLoading(true);
     try {
       const formData = new FormData();
-      formData.append('avatar', file);
+      formData.append('avatar', croppedFile);
 
       const res = await uploadAvatarAction(formData);
       if (res.success && res.url) {
@@ -84,7 +95,7 @@ export default function SettingsPage() {
     if (window.confirm('Are you sure you want to remove your profile picture?')) {
       setAvatarLoading(true);
       try {
-        const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>';
+        const defaultAvatar = '';
         await updateProfile({ avatarUrl: defaultAvatar });
         triggerSuccess('Profile picture removed.');
       } catch (err: any) {
@@ -109,10 +120,14 @@ export default function SettingsPage() {
   };
 
   // Profile Save
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile({ name: profileName, company: profileCompany });
-    triggerSuccess('Profile information saved successfully!');
+    try {
+      await updateProfile({ name: profileName, company: profileCompany });
+      triggerSuccess('Profile information saved successfully!');
+    } catch (err: any) {
+      alert(err.message || 'Failed to save profile changes');
+    }
   };
 
   // Preferences Change
@@ -216,11 +231,17 @@ export default function SettingsPage() {
               <div className="flex items-center gap-5 border-y border-neutral-50 py-5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <div className="relative">
-                  <img
-                    src={user.avatarUrl}
-                    alt={user.name}
-                    className="h-16 w-16 rounded-full border border-neutral-100 object-cover"
-                  />
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="h-16 w-16 rounded-full border border-neutral-100 object-cover"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-500 flex items-center justify-center font-bold text-lg font-sans">
+                      {user.name ? user.name.slice(0, 2).toUpperCase() : 'U'}
+                    </div>
+                  )}
                   {avatarLoading && (
                     <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center">
                       <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -238,7 +259,7 @@ export default function SettingsPage() {
                       <Upload className="h-3.5 w-3.5" />
                       Upload Image
                     </button>
-                    {user.avatarUrl !== 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>' && (
+                    {user.avatarUrl !== '' && (
                       <button
                         type="button"
                         onClick={handleRemoveAvatar}
@@ -558,6 +579,17 @@ export default function SettingsPage() {
 
         </div>
       </div>
+
+      {cropperSrc && (
+        <ImageCropper
+          imageSrc={cropperSrc}
+          onCropComplete={handleCropComplete}
+          onCancel={() => {
+            setCropperSrc(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+          }}
+        />
+      )}
     </div>
   );
 }

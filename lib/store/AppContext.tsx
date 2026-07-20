@@ -37,6 +37,14 @@ interface AppContextType {
   deleteBrandVoicePreset: (id: string) => void;
 }
 
+const sanitizeAvatarUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  if (url.includes('unsplash.com') || url.includes('data:image/svg+xml')) {
+    return '';
+  }
+  return url;
+};
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -45,7 +53,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     email: '',
     name: '',
     company: '',
-    avatarUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>'
+    avatarUrl: ''
   });
   const [orders, setOrders] = useState<Order[]>([]);
   const [brandVoicePresets, setBrandVoicePresets] = useState<BrandVoicePreset[]>([]);
@@ -67,7 +75,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       email: '',
       name: '',
       company: '',
-      avatarUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>'
+      avatarUrl: ''
     });
     setOrders([]);
     setBrandVoicePresets([]);
@@ -116,18 +124,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             let name = '';
             let company = '';
             let email = '';
-            let avatarUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>';
+            let avatarUrl = '';
 
             if (profileData) {
-              name = profileData.name || 'User';
-              company = profileData.company || 'My Company';
+              name = profileData.name || authUser?.user_metadata?.name || 'User';
+              company = profileData.company || authUser?.user_metadata?.company || 'My Company';
               email = profileData.email;
-              avatarUrl = profileData.avatar_url || avatarUrl;
+              avatarUrl = sanitizeAvatarUrl(profileData.avatar_url || authUser?.user_metadata?.avatar_url || avatarUrl);
             } else if (authUser) {
-              name = authUser.email?.split('@')[0] || 'User';
-              company = 'My Company';
+              name = authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User';
+              company = authUser.user_metadata?.company || 'My Company';
               email = authUser.email || '';
+              avatarUrl = sanitizeAvatarUrl(authUser.user_metadata?.avatar_url || avatarUrl);
             }
+
+            console.log('AppProvider user details loaded:', {
+              activeUserId,
+              profileData,
+              authUserMetadata: authUser?.user_metadata,
+              derivedName: name,
+              derivedCompany: company
+            });
 
             setUser({
               id: activeUserId,
@@ -210,8 +227,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedNotifications = localStorage.getItem(`saas_notifications_${activeUserId}`);
       const storedSettings = localStorage.getItem(`saas_settings_${activeUserId}`);
 
-      if (storedUserObj) setUser(JSON.parse(storedUserObj));
-      else setUser(mockUser);
+      if (storedUserObj) {
+        const parsed = JSON.parse(storedUserObj);
+        if (parsed) {
+          parsed.avatarUrl = sanitizeAvatarUrl(parsed.avatarUrl);
+        }
+        setUser(parsed);
+      } else {
+        setUser({ ...mockUser, avatarUrl: sanitizeAvatarUrl(mockUser.avatarUrl) });
+      }
 
       if (storedOrders) {
         setOrders(JSON.parse(storedOrders));

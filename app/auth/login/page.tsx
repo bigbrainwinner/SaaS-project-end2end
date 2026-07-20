@@ -60,6 +60,21 @@ export default function LoginPage() {
         setError(result.error);
         setLoading(false);
       } else {
+        // Overwrite cached user to ensure avatarUrl is completely empty on new login/ID
+        try {
+          const defaultName = email.split('@')[0];
+          const dynamicId = 'usr_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          localStorage.setItem('saas_user', JSON.stringify({
+            id: dynamicId,
+            email,
+            name: defaultName.charAt(0).toUpperCase() + defaultName.slice(1),
+            company: 'My Company',
+            avatarUrl: ''
+          }));
+        } catch (e) {
+          console.warn('Failed to cache login inputs locally', e);
+        }
+        
         // Success: Redirect using window.location.href to force a clean, fresh mount of AppProvider
         window.location.href = '/dashboard';
       }

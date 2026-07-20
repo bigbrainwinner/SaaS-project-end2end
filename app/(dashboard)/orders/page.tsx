@@ -230,25 +230,9 @@ export default function OrdersPage() {
                       </span>
                     </td>
 
-                    {/* Assigned To (Overlapping Avatars) */}
-                    <td className="px-6 py-4.5">
-                      <div className="flex -space-x-1.5 overflow-hidden">
-                        <img
-                          className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover"
-                          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop&crop=face"
-                          alt="Team member 1"
-                        />
-                        <img
-                          className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover"
-                          src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=50&h=50&fit=crop&crop=face"
-                          alt="Team member 2"
-                        />
-                        <img
-                          className="inline-block h-5 w-5 rounded-full ring-2 ring-white object-cover"
-                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=50&h=50&fit=crop&crop=face"
-                          alt="Team member 3"
-                        />
-                      </div>
+                    {/* Assigned To */}
+                    <td className="px-6 py-4.5 text-neutral-400">
+                      —
                     </td>
 
                     {/* Deadline */}

@@ -89,6 +89,20 @@ function SignupFormContent() {
         setError(result.error);
         setLoading(false);
       } else {
+        // Cache user details for local fallback mapping
+        try {
+          const dynamicId = 'usr_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          localStorage.setItem('saas_user', JSON.stringify({
+            id: dynamicId,
+            email,
+            name,
+            company,
+            avatarUrl: ''
+          }));
+        } catch (e) {
+          console.warn('Failed to cache signup inputs locally', e);
+        }
+
         setInfo(result.message || 'Account created successfully!');
         setLoading(false);
         // Reset form fields

@@ -21,8 +21,12 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   const handleLogout = async () => {
     await logoutAction();
-    router.push('/auth/login');
-    router.refresh();
+    try {
+      localStorage.removeItem('saas_user');
+    } catch (e) {
+      console.warn('Failed to clear saas_user local cache on logout', e);
+    }
+    window.location.href = '/auth/login';
   };
 
   const navItems = [
@@ -94,11 +98,17 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
               title="User Account"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={user.avatarUrl}
-                alt={user.name}
-                className="h-9 w-9 rounded-full object-cover shrink-0 border border-neutral-800"
-              />
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name}
+                  className="h-9 w-9 rounded-full object-cover shrink-0 border border-neutral-800"
+                />
+              ) : (
+                <div className="h-9 w-9 rounded-full bg-neutral-800 text-neutral-400 flex items-center justify-center font-bold text-xs shrink-0 border border-neutral-700 font-sans">
+                  {user.name ? user.name.slice(0, 2).toUpperCase() : 'U'}
+                </div>
+              )}
               <div className="flex-1 overflow-hidden">
                 <p className="text-xs font-semibold text-white truncate">{user.name}</p>
                 <p className="text-[10px] text-neutral-400 truncate">{user.company}</p>

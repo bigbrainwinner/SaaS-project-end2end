@@ -11,6 +11,17 @@ create table if not exists public.profiles (
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- Self-healing: Ensure company column exists on profiles in case the table was created by an older version of the schema
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.columns 
+    where table_schema='public' and table_name='profiles' and column_name='company'
+  ) then
+    alter table public.profiles add column company text;
+  end if;
+end $$;
+
 -- Enable RLS on profiles
 alter table public.profiles enable row level security;
 
@@ -20,6 +31,9 @@ create policy "Allow users to view own profile" on public.profiles
 
 create policy "Allow users to update own profile" on public.profiles
   for update using (auth.uid() = id);
+
+create policy "Allow users to insert own profile" on public.profiles
+  for insert with check (auth.uid() = id);
 
 -- Automatic Profile Creator trigger on sign up
 create or replace function public.handle_new_user()
@@ -31,7 +45,7 @@ begin
     new.email,
     coalesce(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     new.raw_user_meta_data->>'company',
-    coalesce(new.raw_user_meta_data->>'avatar_url', 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%239ca3af"><rect width="24" height="24" fill="%23f3f4f6"/><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 2.58-8 6v2h16v-2c0-3.42-3.58-6-8-6z"/></svg>')
+    coalesce(new.raw_user_meta_data->>'avatar_url', '')
   );
   return new;
 end;
